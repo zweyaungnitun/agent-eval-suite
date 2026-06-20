@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agent-eval-suite"
+version = "0.0.1"
+description = "Reusable evaluation harness for LangChain / LangGraph agents"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "pandas>=2.0",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+# Heavy LLM-eval deps land in later sprints; kept optional so the skeleton
+# installs fast and the inner test loop has no network/LLM cost.
+metrics = [
+    "ragas>=0.1",
+    "deepeval>=0.21",
+]
+dev = [
+    "pytest>=7.4",
+    "pytest-cov>=4.1",
+]
+
+[project.scripts]
+agent-eval-suite = "agent_eval_suite.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
