@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Harness Architecture Diagram</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 40px;
+        }
+        .diagram {
+            margin: 40px 0;
+            padding: 20px;
+            background: #f9f9f9;
+            border-left: 4px solid #0066cc;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+        }
+        .component {
+            display: inline-block;
+            background: white;
+            border: 2px solid #0066cc;
+            border-radius: 6px;
+            padding: 15px 20px;
+            margin: 10px;
+            min-width: 150px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .data {
+            display: inline-block;
+            background: #e6f2ff;
+            border: 2px solid #0066cc;
+            border-radius: 6px;
+            padding: 10px 15px;
+            margin: 5px;
+            font-size: 12px;
+        }
+        .arrow {
+            display: inline-block;
+            margin: 0 10px;
+            font-size: 18px;
+            color: #0066cc;
+        }
+        .section {
+            margin: 30px 0;
+            padding: 20px;
+            background: #f0f7ff;
+            border-radius: 6px;
+        }
+        .section h2 {
+            color: #0066cc;
+            margin-top: 0;
+        }
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 13px;
+        }
+        .flow-diagram {
+            background: white;
+            padding: 20px;
+            border-radius: 6px;
+            margin: 20px 0;
+            border: 1px solid #ddd;
+        }
+        .step {
+            display: flex;
+            align-items: center;
+            margin: 15px 0;
+            padding: 10px;
+            background: #f5f5f5;
+            border-radius: 4px;
+        }
+        .step-number {
+            background: #0066cc;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+        .step-content {
+            flex: 1;
+        }
+        .step-content strong {
+            color: #0066cc;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background: #0066cc;
+            color: white;
+            font-weight: bold;
+        }
+        tr:hover {
+            background: #f5f5f5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏗️ Agent Evaluation Harness Architecture</h1>
+
+        <div class="section">
+            <h2>High-Level Pipeline</h2>
+            <div style="text-align: center; padding: 20px; overflow-x: auto;">
+                <div style="display: inline-block; min-width: 100%;">
+                    <div class="component">Your Agent</div>
+                    <div class="arrow">↓</div>
+                    <div class="component">Adapter</div>
+                    <div class="arrow">↓</div>
+                    <div class="component">Runner</div>
+                    <div class="arrow">↓</div>
+                    <div class="component">Metric Layers</div>
+                    <div class="arrow">↓</div>
+                    <div class="component">Scorecard</div>
+                    <div class="arrow">↓</div>
+                    <div class="component">CSV/JSON</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Core Components</h2>
+
+            <h3>1. Adapter (harness/adapter.py)</h3>
+            <p><strong>Purpose:</strong> Normalize any agent flavor to <code>AgentCallable</code></p>
+            <table>
+                <tr>
+                    <th>Agent Type</th>
+                    <th>Input</th>
+                    <th>Output</th>
+                </tr>
+                <tr>
+                    <td>Plain callable</td>
+                    <td><code>fn(query: str) → str | dict | AgentResult</code></td>
+                    <td>✅ Today</td>
+                </tr>
+                <tr>
+                    <td>LangChain Runnable</td>
+                    <td><code>.invoke(input)</code></td>
+                    <td>🔜 Sprint 1</td>
+                </tr>
+                <tr>
+                    <td>LangGraph Graph</td>
+                    <td><code>.invoke(state)</code></td>
+                    <td>🔜 Sprint 1</td>
+                </tr>
+            </table>
+
+            <h3>2. Models (harness/models.py)</h3>
+            <p><strong>The data contracts that flow through the harness:</strong></p>
+
+            <table>
+                <tr>
+                    <th>Class</th>
+                    <th>Purpose</th>
+                    <th>Key Fields</th>
+                </tr>
+                <tr>
+                    <td><code>EvalCase</code></td>
+                    <td>Test input</td>
+                    <td><code>id, question, ground_truth, reference_contexts</code></td>
+                </tr>
+                <tr>
+                    <td><code>AgentResult</code></td>
+                    <td>Agent output</td>
+                    <td><code>answer, retrieved_contexts, trajectory, latency_s, error</code></td>
+                </tr>
+                <tr>
+                    <td><code>Scorecard</code></td>
+                    <td>Evaluation results</td>
+                    <td><code>per_case, aggregate, metadata</code></td>
+                </tr>
+                <tr>
+                    <td><code>StepRecord</code></td>
+                    <td>One agent action</td>
+                    <td><code>step_type, name, args, output</code></td>
+                </tr>
+            </table>
+
+            <h3>3. Runner (harness/runner.py)</h3>
+            <p><strong>Purpose:</strong> Execute agent over dataset, isolate exceptions, build scorecard</p>
+            <div class="flow-diagram">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-content"><strong>Initialize:</strong> Wrap agent with <code>adapt()</code>, set up config</div>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-content"><strong>For each case:</strong> Call <code>agent.run(case.question)</code></div>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-content"><strong>Isolate:</strong> Catch exceptions, record errors, continue to next case</div>
+                </div>
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <div class="step-content"><strong>Collect:</strong> Build DataFrame with [id, question, latency_s, error, ...]</div>
+                </div>
+                <div class="step">
+                    <div class="step-number">5</div>
+                    <div class="step-content"><strong>Return:</strong> Scorecard ready for metric layers</div>
+                </div>
+            </div>
+
+            <h3>4. Config (harness/config.py)</h3>
+            <p><strong>Purpose:</strong> Centralize run configuration</p>
+            <table>
+                <tr>
+                    <th>Field</th>
+                    <th>Default</th>
+                    <th>Purpose</th>
+                </tr>
+                <tr>
+                    <td><code>model</code></td>
+                    <td>"gpt-4o-mini"</td>
+                    <td>Agent's LLM</td>
+                </tr>
+                <tr>
+                    <td><code>eval_model</code></td>
+                    <td>"gpt-4o-mini"</td>
+                    <td>Evaluator's LLM (for metrics)</td>
+                </tr>
+                <tr>
+                    <td><code>metrics</code></td>
+                    <td>[]</td>
+                    <td>Which metrics to compute</td>
+                </tr>
+                <tr>
+                    <td><code>dataset_path</code></td>
+                    <td>None</td>
+                    <td>Where to load test cases</td>
+                </tr>
+                <tr>
+                    <td><code>thresholds</code></td>
+                    <td>{}</td>
+                    <td>Pass/fail cutoffs</td>
+                </tr>
+            </table>
+
+            <h3>5. Metric Layers (metrics/)</h3>
+            <p><strong>Purpose:</strong> Compute evaluations on the scorecard</p>
+            <p>Each metric layer reads <code>Scorecard</code> and adds columns to <code>per_case</code>:</p>
+            <ul>
+                <li><strong>RAGAS:</strong> answer_relevancy, faithfulness, context_precision, context_recall</li>
+                <li><strong>DeepEval:</strong> guardrails, bias, hallucination</li>
+                <li><strong>Custom:</strong> Tool accuracy, trajectory quality</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Data Flow Example</h2>
+            <div class="flow-diagram">
+                <div style="background: #fff3cd; padding: 15px; border-radius: 4px; margin-bottom: 10px;">
+                    <strong>INPUT: EvalCase</strong><br>
+                    id: "q1" | question: "What is ML?" | ground_truth: "ML is a subset of AI"
+                </div>
+                <div style="text-align: center; color: #0066cc; font-weight: bold; margin: 10px 0;">↓ adapt() + measure latency ↓</div>
+                <div style="background: #e8f5e9; padding: 15px; border-radius: 4px; margin-bottom: 10px;">
+                    <strong>CALL: agent.run(query)</strong><br>
+                    Returns: "Machine learning is..." in 0.234s
+                </div>
+                <div style="text-align: center; color: #0066cc; font-weight: bold; margin: 10px 0;">↓ coerce to AgentResult ↓</div>
+                <div style="background: #e3f2fd; padding: 15px; border-radius: 4px; margin-bottom: 10px;">
+                    <strong>OUTPUT: AgentResult</strong><br>
+                    answer: "Machine learning is..." | latency_s: 0.234 | error: None
+                </div>
+                <div style="text-align: center; color: #0066cc; font-weight: bold; margin: 10px 0;">↓ collect into Scorecard ↓</div>
+                <div style="background: #f3e5f5; padding: 15px; border-radius: 4px; margin-bottom: 10px;">
+                    <strong>SCORECARD (before metrics)</strong><br>
+                    per_case DataFrame: [id, question, latency_s, error]<br>
+                    metadata: {n_cases: 50, n_errors: 0}
+                </div>
+                <div style="text-align: center; color: #0066cc; font-weight: bold; margin: 10px 0;">↓ compute_metrics_mock() ↓</div>
+                <div style="background: #fce4ec; padding: 15px; border-radius: 4px;">
+                    <strong>SCORECARD (after metrics)</strong><br>
+                    per_case: [..., answer_relevancy: 0.82, faithfulness: 0.91, ...]<br>
+                    aggregate: {answer_relevancy: 0.785, faithfulness: 0.895}
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Exception Isolation</h2>
+            <p>One bad case doesn't abort the run:</p>
+            <div style="background: #fff; border: 1px solid #ddd; padding: 15px; border-radius: 4px; margin: 10px 0;">
+                <code style="display: block; padding: 10px; background: #f4f4f4; border-radius: 3px;">
+for case in cases:<br>
+&nbsp;&nbsp;try:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;result = agent.run(case.question)<br>
+&nbsp;&nbsp;except Exception as e:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;result = AgentResult(answer="", error=str(e))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;# Continue to next case!
+                </code>
+            </div>
+            <p>Result: Bad cases get <code>error</code> set, metrics skip them (NaN), you see all results.</p>
+        </div>
+
+        <div class="section">
+            <h2>Key Design Principles</h2>
+            <ul>
+                <li><strong>Single responsibility:</strong> Each component does one thing well</li>
+                <li><strong>Data contracts:</strong> Models are the language (not dict keys)</li>
+                <li><strong>Fault isolation:</strong> One bad case ≠ bad run</li>
+                <li><strong>Composable metrics:</strong> Add layers without changing runner</li>
+                <li><strong>Type safety:</strong> Dataclasses → IDE autocomplete, self-documenting</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Code Example</h2>
+            <div style="background: #f4f4f4; padding: 15px; border-radius: 4px; overflow-x: auto;">
+                <pre><code>from agent_eval_suite import EvalRunner, load_dataset, EvalConfig
+from agent_eval_suite.metrics.ragas_simple import compute_metrics_mock
+
+# 1. Define agent (any callable)
+def my_agent(query: str) -> str:
+    return "The answer is..."
+
+# 2. Load dataset
+cases = load_dataset("datasets/wiki_50.json")
+
+# 3. Configure
+config = EvalConfig(metrics=["answer_relevancy", "faithfulness"])
+
+# 4. Run
+runner = EvalRunner(my_agent, config)
+scorecard = runner.run(cases)
+
+# 5. Apply metrics
+scorecard = compute_metrics_mock(scorecard, cases, config)
+
+# 6. Export
+scorecard.to_csv("results.csv")
+scorecard.to_json("results.json")</code></pre>
+            </div>
+        </div>
+
+    </div>
+</body>
+</html>
