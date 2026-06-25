@@ -11,17 +11,24 @@ from typing import Any
 from .adapter import adapt
 from .config import EvalConfig
 from .models import AgentResult, EvalCase, Scorecard
+from .tracing import NoOpTracer, Tracer, build_tracer
 
 
 class EvalRunner:
-    def __init__(self, agent: Any, config: EvalConfig | None = None):
+    def __init__(self, agent: Any, config: EvalConfig | None = None, tracer: Tracer | None = None):
         self.agent = adapt(agent)
         self.config = config or EvalConfig()
+        self.tracer: Tracer = tracer if tracer is not None else build_tracer(self.config.tracing)
 
     def run(self, dataset: list[EvalCase]) -> Scorecard:
+        self.tracer.on_run_start(self.config, len(dataset))
+
         results: dict[str, AgentResult] = {}
         for case in dataset:
-            results[case.id] = self._run_case(case)
+            self.tracer.on_case_start(case)
+            result = self._run_case(case)
+            results[case.id] = result
+            self.tracer.on_case_end(case, result)
 
         scorecard = Scorecard.empty(
             dataset,
@@ -35,6 +42,8 @@ class EvalRunner:
         scorecard.per_case["latency_s"] = [results[c.id].latency_s for c in dataset]
         scorecard.per_case["error"] = [results[c.id].error for c in dataset]
         scorecard.metadata["_results"] = results  # handed to metric layers
+
+        self.tracer.on_run_end(scorecard)
         return scorecard
 
     def _run_case(self, case: EvalCase) -> AgentResult:
